@@ -54,7 +54,7 @@ func colorPrint(str string, color int) {
 func WinOutMatrix(matrix [][]byte) {
 	for k1 := range matrix {
 		for k2 := range matrix[k1] {
-			if matrix[k1][k2] == 1 {
+			if matrix[k1][k2] == 0 {
 				colorPrint(charsetPrint, white)
 			} else {
 				colorPrint(charsetPrint, black)

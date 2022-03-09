@@ -1,7 +1,8 @@
-package qr_windows
+package qr_common
 
 import "fmt"
 
+//通用
 const (
 	black                    byte = 1  //二值化存储 黑景色值
 	white                    byte = 0  //二值化存储 白景色值
