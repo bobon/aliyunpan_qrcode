@@ -3,7 +3,6 @@ package qr_common
 import (
 	"bufio"
 	"encoding/base64"
-	"fmt"
 	"image"
 	"image/png"
 	"io/fs"
@@ -33,7 +32,6 @@ func PrintFromFile(path string) error {
 		return err
 	}
 	result := getMatrixByAnalysisBoundAndLand(matrix)
-	printSource(result)
 	qr_windows.WinOutMatrix(result)
 	return nil
 }
@@ -70,7 +68,7 @@ func getMatrixFromImage(img image.Image) [][]byte {
 	for x := rect.Min.X; x < rect.Max.X; x++ {
 		bts := []byte{}
 		for y := rect.Min.Y; y < rect.Max.Y; y++ {
-			if grey1(img.At(x, y).RGBA()) > 125 {
+			if grey1(img.At(y, x).RGBA()) > 125 { //img.At  坐标系翻转
 				bts = append(bts, white)
 			} else {
 				bts = append(bts, black)
@@ -89,25 +87,32 @@ func getMatrixByAnalysisBoundAndLand(matrix [][]byte) [][]byte {
 	result := [][]byte{}
 	cutBoundMatrix(&matrix)
 	land := getSingleBlockLand(matrix)
-	fmt.Println(land)
-	return nil
-	current1 := 0
 	for k := range matrix {
-		current1++
 		rtl := []byte{}
-		current2 := 0
 		for kk := range matrix {
-			current2++
-			if current2%land == int(white) {
-				rtl = append(rtl, matrix[k][kk])
+			if (kk+1)%land == 0 {
+				rtl = append(rtl, matrix[k][kk-land/2])
 			}
 		}
-		if current1%land == 0 {
+		if (k+1)%land == 0 {
 			result = append(result, rtl)
 		}
 	}
 	//printSource(result)
 	return result
+}
+
+//给矩阵增加白框，提高对比度
+func getMatrixBound(matrix [][]byte, frame int) [][]byte {
+	if frame > 0 {
+		lastMatrix := make([][]byte, len(matrix)+frame*2)
+		for k := range lastMatrix {
+			lastMatrix[k] = make([]byte, len(matrix)+frame*2)
+			// -----
+		}
+		return lastMatrix
+	}
+	return matrix
 }
 
 //裁剪矩阵边界
@@ -192,25 +197,24 @@ func getSingleBlockLand(matrix [][]byte) int {
 	upFlag, downFlag := true, true
 	upLength, downLength := 0, 0
 	for k := range matrix[0] {
-		if !(upFlag && downFlag) {
+		if !upFlag && !downFlag {
 			break
 		}
 		if upFlag {
-			if matrix[0][k] == white {
+			if matrix[0][k] == black {
 				upLength++
 			} else {
 				upFlag = false
 			}
 		}
 		if downFlag {
-			if matrix[len(matrix)-1][k] == white {
+			if matrix[len(matrix)-1][k] == black {
 				downLength++
 			} else {
 				downFlag = false
 			}
 		}
 	}
-	fmt.Println(upLength, downLength)
 	//层数  7 -> 5 -> 3
 	if upLength > downLength {
 		return upLength / 7
