@@ -1,12 +1,8 @@
 package qr_common
 
 import (
-	"bufio"
-	"encoding/base64"
+	"fmt"
 	"image"
-	"image/png"
-	"io/fs"
-	"io/ioutil"
 	"os"
 	"qrcode/qr_windows"
 )
@@ -17,13 +13,23 @@ const (
 )
 
 // -----------------------
-func Base64ToFile(src string) {
-	dst, err := base64.StdEncoding.DecodeString(src)
-	if err != nil {
-		panic(err)
-	}
-	ioutil.WriteFile("test2_src.png", dst, fs.FileMode(777))
-}
+// func Base64ToFile(src string) error {
+// 	dst, err := base64.StdEncoding.DecodeString(src)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	//	ioutil.WriteFile("test2_src.png", dst, fs.FileMode(777))
+
+// 	img, str, err := image.Decode(strings.NewReader(string(dst)))
+// 	fmt.Println(str, err)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	result := getMatrixByAnalysisBoundAndLand(getMatrixFromImage(img))
+// 	bound := getMatrixBound(result, 1)
+// 	qr_windows.WinOutMatrix(bound)
+// 	return nil
+// }
 
 // ---------------------
 func PrintFromFile(path string) error {
@@ -32,7 +38,10 @@ func PrintFromFile(path string) error {
 		return err
 	}
 	result := getMatrixByAnalysisBoundAndLand(matrix)
-	qr_windows.WinOutMatrix(result)
+	bound := getMatrixBound(result, 1)
+	qr_windows.WinOutMatrix(bound)
+	//fmt.Println("----------------------------------------------")
+	//WinOutMatrix(bound)
 	return nil
 }
 
@@ -53,7 +62,7 @@ func getSourceMatrixFromFile(path string) ([][]byte, error) {
 		return nil, err
 	}
 	defer file.Close()
-	img, err := png.Decode(bufio.NewReader(file))
+	img, _, err := image.Decode(file)
 	if err != nil {
 		return nil, err
 	}
@@ -65,13 +74,13 @@ func getSourceMatrixFromFile(path string) ([][]byte, error) {
 func getMatrixFromImage(img image.Image) [][]byte {
 	rect := img.Bounds()
 	matrix := [][]byte{}
-	for x := rect.Min.X; x < rect.Max.X; x++ {
+	for y := rect.Min.Y; y < rect.Max.Y; y++ { //坐标系 左上(0,0)  右下 (max,max)
 		bts := []byte{}
-		for y := rect.Min.Y; y < rect.Max.Y; y++ {
-			if grey1(img.At(y, x).RGBA()) > 125 { //img.At  坐标系翻转
-				bts = append(bts, white)
+		for x := rect.Min.X; x < rect.Max.X; x++ {
+			if grey1(img.At(x, y).RGBA()) > 125 {
+				bts = append(bts, common_white)
 			} else {
-				bts = append(bts, black)
+				bts = append(bts, common_black)
 			}
 		}
 		matrix = append(matrix, bts)
@@ -91,7 +100,7 @@ func getMatrixByAnalysisBoundAndLand(matrix [][]byte) [][]byte {
 		rtl := []byte{}
 		for kk := range matrix {
 			if (kk+1)%land == 0 {
-				rtl = append(rtl, matrix[k][kk-land/2])
+				rtl = append(rtl, matrix[k][kk])
 			}
 		}
 		if (k+1)%land == 0 {
@@ -102,13 +111,19 @@ func getMatrixByAnalysisBoundAndLand(matrix [][]byte) [][]byte {
 	return result
 }
 
-//给矩阵增加白框，提高对比度
+//给矩阵增加边框，提高对比度
 func getMatrixBound(matrix [][]byte, frame int) [][]byte {
 	if frame > 0 {
 		lastMatrix := make([][]byte, len(matrix)+frame*2)
 		for k := range lastMatrix {
 			lastMatrix[k] = make([]byte, len(matrix)+frame*2)
-			// -----
+			for kk := range lastMatrix[k] {
+				lastMatrix[k][kk] = common_white
+				if (k >= frame && k < len(lastMatrix)-frame) &&
+					(kk >= frame && kk < len(lastMatrix)-frame) {
+					lastMatrix[k][kk] = matrix[k-frame][kk-frame]
+				}
+			}
 		}
 		return lastMatrix
 	}
@@ -128,7 +143,7 @@ func cutBoundMatrix(matrix *[][]byte) {
 	for k1 := 0; k1 < len(*matrix); k1++ {
 		flag = false
 		for k2 := range mtx[k1] {
-			if mtx[k1][k2] == black {
+			if mtx[k1][k2] == common_black {
 				ws = k1
 				flag = true
 				break
@@ -142,7 +157,7 @@ func cutBoundMatrix(matrix *[][]byte) {
 	for k1 := len(*matrix) - 1; k1 >= 0; k1-- {
 		flag = false
 		for k2 := range mtx[k1] {
-			if mtx[k1][k2] == black {
+			if mtx[k1][k2] == common_black {
 				we = k1
 				flag = true
 				break
@@ -156,7 +171,7 @@ func cutBoundMatrix(matrix *[][]byte) {
 	for k1 := 0; k1 < len(mtx[0]); k1++ {
 		flag = false
 		for k2 := 0; k2 < len(*matrix); k2++ {
-			if mtx[k2][k1] == black {
+			if mtx[k2][k1] == common_black {
 				ls = k1
 				flag = true
 				break
@@ -170,7 +185,7 @@ func cutBoundMatrix(matrix *[][]byte) {
 	for k1 := len(mtx[0]) - 1; k1 >= 0; k1-- {
 		flag = false
 		for k2 := 0; k2 < len(*matrix); k2++ {
-			if mtx[k2][k1] == black {
+			if mtx[k2][k1] == common_black {
 				le = k1
 				flag = true
 				break
@@ -180,6 +195,9 @@ func cutBoundMatrix(matrix *[][]byte) {
 			break
 		}
 	}
+	fmt.Println("ws, we", ws, we)
+	fmt.Println("ls, le", ls, le)
+
 	//剪裁矩阵
 	*matrix = mtx[ws : we+1]
 	mtx = *matrix
@@ -201,14 +219,14 @@ func getSingleBlockLand(matrix [][]byte) int {
 			break
 		}
 		if upFlag {
-			if matrix[0][k] == black {
+			if matrix[0][k] == common_black {
 				upLength++
 			} else {
 				upFlag = false
 			}
 		}
 		if downFlag {
-			if matrix[len(matrix)-1][k] == black {
+			if matrix[len(matrix)-1][k] == common_black {
 				downLength++
 			} else {
 				downFlag = false
