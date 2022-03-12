@@ -1,4 +1,4 @@
-module qrcode
+module qrcode2console
 
 go 1.17
 
