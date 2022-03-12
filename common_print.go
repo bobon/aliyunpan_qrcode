@@ -4,8 +4,9 @@ import "fmt"
 
 //跨平台通用
 const (
-	Common_black                        = 30 //黑
-	Common_white                        = 37 //二值化存储 白景色值
+	Common_black = 30 //黑
+	Common_white = 37 //二值化存储 白景色值
+
 	Common_console_black_background int = 40 // 控制台 黑色 背景
 	Common_console_white_background int = 47 // 控制台 白色 背景
 )

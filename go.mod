@@ -1,4 +1,4 @@
-module qrcode2console
+module github.com/yantao1995/qrcode2console
 
 go 1.17
 

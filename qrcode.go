@@ -37,11 +37,10 @@ const (
 
 type qrcode struct {
 	img                                                   image.Image //img对象  用于base64对象可以方便输出文件
-	sourceMinBound, genBound                              int         //原始最小边界值，生成后的边界
+	sourceMinBound, genBound, shrinkRate                  int         //原始最小边界值，生成后的边界,缩放比例
 	isBoundSet                                            bool
 	character                                             string   //输出字符 一般2个 ▇▇ 可根据控制台大小调整 个数
-	imgBinaryMatrix, cutMatrix, shrinkMatrix, boundMatrix [][]byte //二值化图像矩阵,剪裁后的矩阵，缩放后的矩阵，加边界后的矩阵
-	shrinkRate                                            int      //缩放比例
+	imgBinaryMatrix, cutMatrix, shrinkMatrix, boundMatrix [][]byte //二值化图像矩阵,剪裁后的矩阵，缩放后的矩阵，加边界后的矩阵                                                           //缩放比例
 }
 
 //从base64中获取qr对象
