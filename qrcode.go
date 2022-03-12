@@ -1,16 +1,15 @@
-package qr
+package qrcode2console
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
-	"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"io/ioutil"
 	"net/http"
-	"qrcode/qr_windows"
 
 	"golang.org/x/image/bmp"
 	"golang.org/x/image/webp"
@@ -24,6 +23,8 @@ const (
 	common_console_white_background int  = 47 // 控制台 白色 背景
 	common_console_black_foreground int  = 30 // 控制台 黑色 前景
 	common_console_white_foreground int  = 37 // 控制台 白色 前景
+
+	default_character = "▇▇"
 )
 
 const (
@@ -43,68 +44,102 @@ type qrcode struct {
 	shrinkRate                                            int      //缩放比例
 }
 
-// //从base64中获取qr对象
-// func NewQrcodeFromBase64(src string) (*qrcode, error) {
-// 	qr := &qrcode{}
-// 	bts, err := base64.StdEncoding.DecodeString(src)
-// 	if err != nil {
-// 		return qr, err
-// 	}
-// 	qr.genImg(bts)
-// 	return qr, nil
-// }
+//从base64中获取qr对象
+func NewQrcodeFromBase64(src string) (*qrcode, error) {
+	bts, err := base64.StdEncoding.DecodeString(src)
+	if err != nil {
+		return nil, err
+	}
+	return newQRFromBytes(bts)
+}
 
 //从文件中获取qr对象
 func NewQrcodeFromPath(path string) (*qrcode, error) {
-	qr := &qrcode{character: "▇▇"}
 	bts, err := ioutil.ReadFile(path)
 	if err != nil {
-		return qr, err
+		return nil, err
 	}
+	return newQRFromBytes(bts)
+}
+
+//创建
+func newQRFromBytes(bts []byte) (*qrcode, error) {
+	qr := &qrcode{character: default_character}
 	if err := qr.genImg(bts); err != nil {
 		return qr, err
 	}
+	qr.binaryImg()
 	if len(qr.imgBinaryMatrix) == 0 ||
 		len(qr.imgBinaryMatrix[0]) == 0 {
 		return qr, errors.New("图片非二维码")
 	}
-	qr.binaryImg()
 	qr.cut()
 	qr.shrink()
 	return qr, nil
 }
 
-//向windows控制台输出图像
-//边框
-func (qr *qrcode) PrintOnWindowsConsole() {
+// //向windows控制台输出图像
+// //边框
+// func (qr *qrcode) PrintOnWindowsConsole() {
+// 	qr.bound()
+// 	defer qr_windows.WinColorPrint("", qr_windows.Win_light_gray) //输出后，如果最后一个色块是黑色，将导致控制台为黑，此处恢复默认值
+// 	for k1 := range qr.boundMatrix {
+// 		for k2 := range qr.boundMatrix[k1] {
+// 			if qr.boundMatrix[k1][k2] == common_white {
+// 				WinColorPrint(qr.character, qr_windows.Win_white)
+// 			} else {
+// 				WinColorPrint(qr.character, qr_windows.Win_black)
+// 			}
+// 		}
+// 		println()
+// 	}
+// }
+
+//向全平台控制台输出图像
+func (qr *qrcode) PrintForConsole() {
 	qr.bound()
 	for k1 := range qr.boundMatrix {
+		str := ""
 		for k2 := range qr.boundMatrix[k1] {
 			if qr.boundMatrix[k1][k2] == common_white {
-				qr_windows.WinColorPrint(qr.character, qr_windows.Win_white)
+				str += CommonColorPrint(qr.character, Common_white)
 			} else {
-				qr_windows.WinColorPrint(qr.character, qr_windows.Win_black)
+				str += CommonColorPrint(qr.character, Common_black)
 			}
 		}
-		println()
+		println(str)
 	}
 }
 
-//向全平台控制台输出图像 图像不稳定
-func (qr *qrcode) PrintOnAllPlatformConsole() {
-	fmt.Println(qr.img.Bounds())
-}
+// //打印控制台输出的源矩阵
+// func (qr *qrcode) PrintSourceBinaryMatrix() {
+// 	for k1 := range qr.imgBinaryMatrix {
+// 		for k2 := range qr.imgBinaryMatrix[k1] {
+// 			print(qr.imgBinaryMatrix[k1][k2])
+// 		}
+// 		println()
+// 	}
+// }
 
-//打印源矩阵
-func (qr *qrcode) PrintSourceMatrix() {
-	matrix := qr.shrinkMatrix
-	for k1 := range matrix {
-		for k2 := range matrix[k1] {
-			print(matrix[k1][k2])
-		}
-		println()
-	}
-}
+// //打印控制台输出的源矩阵
+// func (qr *qrcode) PrintSourceCutMatrix() {
+// 	for k1 := range qr.cutMatrix {
+// 		for k2 := range qr.cutMatrix[k1] {
+// 			print(qr.cutMatrix[k1][k2])
+// 		}
+// 		println()
+// 	}
+// }
+
+// //打印控制台输出的源矩阵
+// func (qr *qrcode) PrintSourceShrinkMatrix() {
+// 	for k1 := range qr.shrinkMatrix {
+// 		for k2 := range qr.shrinkMatrix[k1] {
+// 			print(qr.shrinkMatrix[k1][k2])
+// 		}
+// 		println()
+// 	}
+// }
 
 //设置外边框
 func (qr *qrcode) SetBound(bound int) {
@@ -173,11 +208,11 @@ func (qr *qrcode) shrink() {
 	//缩放
 	qr.shrinkMatrix = make([][]byte, len(qr.cutMatrix)/qr.shrinkRate)
 	for k, si, si2 := 0, 0, 0; k < len(qr.cutMatrix); k++ {
-		if k%qr.shrinkRate == 0 && si < len(qr.shrinkMatrix)-1 {
+		if (k-qr.shrinkRate/2)%qr.shrinkRate == 0 { //防止边缘像素识别异常，取像素中值为色块
 			qr.shrinkMatrix[si] = make([]byte, len(qr.cutMatrix[k])/qr.shrinkRate)
 			si2 = 0
 			for kk := 0; kk < len(qr.cutMatrix[k]); kk++ {
-				if kk%qr.shrinkRate == 0 && si2 < len(qr.shrinkMatrix[si])-1 {
+				if (kk-qr.shrinkRate/2)%qr.shrinkRate == 0 {
 					qr.shrinkMatrix[si][si2] = qr.cutMatrix[k][kk]
 					si2++
 				}
