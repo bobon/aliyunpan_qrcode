@@ -15,7 +15,7 @@ golang 将二维码图片输出到控制台显示
 
 
 ```
-qr, err := qrcode2console.NewQrcodeFromPath("base64")
+qr, err := qrcode2console.NewQrcodeFromBase64("base64")
 if err != nil {
     log.Fatalln(err)
 }
