@@ -9,8 +9,9 @@ Parse QR code pictures or Base64 data, and then output to the console.
 - Why is there this library?
   - 写爬虫的时候，遇到需要扫二维码的场景，控制台可以输出，然后直接扫码。
   - When writing a crawler, you need to scan the QR code. The console can output it, and then scan the code directly.
-  - 使用【二维码识别区外不能有其他图案，否则会生成失败】
-  - Use [no other patterns outside the QR code recognition area, otherwise the generation will fail]
+  - 
+#### 使用【二维码识别区外不能有其他图案，否则会生成失败】
+#### Use [no other patterns outside the QR code recognition area, otherwise the generation will fail]
 
   ```
   go get github.com/yantao1995/qrcode2console 
