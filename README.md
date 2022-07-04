@@ -1,4 +1,4 @@
-# qrcode2console
+# aliyunpan_qrcode
 
 golang 将二维码图片输出到控制台显示 
 
