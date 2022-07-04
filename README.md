@@ -6,38 +6,11 @@ Parse QR code pictures or Base64 data, and then output to the console.
 
 
 - 为什么有这个库？
-- Why is there this library?
-  - 写爬虫的时候，遇到需要扫二维码的场景，控制台可以输出，然后直接扫码。
-  - When writing a crawler, you need to scan the QR code. The console can output it, and then scan the code directly.
+  - 由于阿里云盘referrer的限制，必须使用移动端token，使用桌面web端token会导致无法下载与预览。使用此程序，可通过扫描二维码，获取阿里云盘的登陆refreshToken。
 
-#### 使用【二维码识别区外不能有其他图案，否则会生成失败】
-#### Use [no other patterns outside the QR code recognition area, otherwise the generation will fail]
+- 使用方法
+  git clone 
+  sudo apt-get install -y curl jq
+  go get github.com/bobon/aliyunpan_qrcode  
+  bash aliyunpan_qrcode.sh
 
-  ```
-  go get github.com/yantao1995/qrcode2console 
-  ```
-
-#### 支持从base64中生成
-#### Support generation from Base64
-
-
-```
-qr, err := qrcode2console.NewQrcodeFromBase64("base64")
-if err != nil {
-    log.Fatalln(err)
-}
-qr.SetBound(1) //不设置外边框将使用原外框的最小边的缩放比例 //If the outer frame is not set, the scale of the smallest edge of the original outer frame will be used
-qr.PrintForConsole()
-```
-
-#### 支持从文件夹路径生成
-#### Support generating from folder path
-
-```
-qr, err := qrcode2console.NewQrcodeFromPath("filePath")
-if err != nil {
-    log.Fatalln(err)
-}
-qr.SetBound(1) //不设置外边框将使用原外框的最小边的缩放比例 //If the outer frame is not set, the scale of the smallest edge of the original outer frame will be used
-qr.PrintForConsole()
-```
