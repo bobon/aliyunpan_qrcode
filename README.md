@@ -10,8 +10,8 @@ Parse QR code pictures or Base64 data, and then output to the console.
 
 - 使用方法
 ```
-  git clone https://github.com/bobon/aliyunpan_qrcode.git && cd aliyunpan_qrcode
-  sudo apt-get install -y curl jq
-  go get github.com/bobon/aliyunpan_qrcode  
-  bash aliyunpan_qrcode.sh
+  $ git clone https://github.com/bobon/aliyunpan_qrcode.git && cd aliyunpan_qrcode
+  $ sudo apt-get install -y curl jq go
+  $ go get github.com/bobon/aliyunpan_qrcode  
+  $ bash aliyunpan_qrcode.sh
 ```
