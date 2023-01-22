@@ -9,6 +9,7 @@
 ```
   $ git clone https://github.com/bobon/aliyunpan_qrcode.git && cd aliyunpan_qrcode
   $ sudo apt-get install -y curl jq go
+  $ npm install qrcode-terminal
   $ go get github.com/bobon/aliyunpan_qrcode  
   $ bash aliyunpan_qrcode.sh
 ```
